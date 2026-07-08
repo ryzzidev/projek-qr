@@ -1,8 +1,4 @@
-// ==========================================
-// fix new by ryzzi
-// ==========================================
-
-// 1. MANIFEST FILE VIRTUAL (PWA LOGO)
+// 1. Membuat Manifest File Virtual lewat Blob URL (Memastikan LOGO APPS pas diinstall tetap pakai guenfa.png)
 const manifestBlob = new Blob([JSON.stringify({
     "name": "Qr ryzzi",
     "short_name": "Qr ryzzi",
@@ -26,7 +22,7 @@ link.rel = 'manifest';
 link.href = manifestURL;
 document.head.appendChild(link);
 
-// 2. SERVICE WORKER PWA IN-LINE
+// 2
 if ('serviceWorker' in navigator) {
     const swCode = `
         const CACHE_NAME = 'r-qr-cache-v4';
@@ -41,7 +37,7 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.log('Gagal mendaftarkan PWA:', err));
 }
 
-// 3. PROSES TOMBOL MANUAL INSTALL PWA
+// --- PROSES TOMBOL MANUAl INSTALL PWA ---
 let deferredPrompt;
 const pwaInstallBtn = document.getElementById('pwaInstallBtn');
 
@@ -63,7 +59,7 @@ pwaInstallBtn.addEventListener('click', async () => {
     }
 });
 
-// 4. ANIMASI BACKGROUND (Hujan Bola Biru)
+// --- ANIMASI BACKGROUND (Hujan Bola Biru) ---
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
@@ -102,7 +98,7 @@ function animate() {
 }
 animate();
 
-// 5. LOGIKA UTAMA QR GENERATOR (SESUAI ID ASLI)
+// --- LOGIKA UTAMA QR GENERATOR ---
 const termsCheckbox = document.getElementById('termsCheckbox');
 const enterBtn = document.getElementById('enterBtn');
 const infoBtn = document.getElementById('infoBtn');
@@ -129,6 +125,10 @@ const qrPreviewContainer = document.getElementById('qrPreview');
 
 let qrCodeStyling;
 let selectedLogoDataUrl = "";
+
+// Mengubah nilai input warna default di HTML agar sinkron dengan QR Code (QR Hitam, Latar Putih)
+qrColor.value = "#000000";
+bgColor.value = "#ffffff";
 
 termsCheckbox.addEventListener('change', function() {
     enterBtn.disabled = !this.checked;
@@ -194,14 +194,16 @@ qrLogo.addEventListener('change', function(e) {
 });
 
 function initQRCode() {
+    // Default warna diubah: QR Hitam (#000000), Background Putih (#ffffff)
     qrCodeStyling = new QRCodeStyling({
         width: 250,
         height: 250,
         type: "canvas",
         data: "https://google.com",
-        dotsOptions: { color: "#ffffff", type: "square" },
-        backgroundOptions: { color: "#0d1117" },
-        cornersSquareOptions: { type: "square" },
+        dotsOptions: { color: "#000000", type: "square" },
+        backgroundOptions: { color: "#ffffff" },
+        cornersSquareOptions: { color: "#000000", type: "square" },
+        cornersDotOptions: { color: "#000000", type: "square" },
         imageOptions: { crossOrigin: "anonymous", hideBackgroundDots: true, imageSize: 0.3 }
     });
     qrPreviewContainer.innerHTML = "";
@@ -212,8 +214,6 @@ function generateQR() {
     const textValue = qrText.value.trim() || "https://google.com";
     const currentSize = parseFloat(logoSizeRange.value);
 
-    if (!qrCodeStyling) return;
-
     qrCodeStyling.update({
         data: textValue,
         dotsOptions: { color: qrColor.value, type: dotsType.value },
@@ -229,33 +229,16 @@ function generateQR() {
     });
 }
 
-// Tombol Perbarui Preview
 previewBtn.addEventListener('click', generateQR);
 
-// Otomatis update preview QR saat user sedang mengetik link baru
-qrText.addEventListener('input', generateQR);
-
-// FIX TOMBOL DOWNLOAD: Memaksa data ter-update mendalam ke canvas tepat sebelum file diunduh
 downloadBtn.addEventListener('click', function() {
-    const textValue = qrText.value.trim() || "https://google.com";
-    const currentSize = parseFloat(logoSizeRange.value);
+    // Memastikan data tautan (URL) diperbarui paling akurat ke dalam QR sebelum di-download
+    generateQR();
 
-    qrCodeStyling.update({
-        data: textValue,
-        dotsOptions: { color: qrColor.value, type: dotsType.value },
-        backgroundOptions: { color: bgColor.value },
-        cornersSquareOptions: { color: qrColor.value, type: cornersType.value },
-        cornersDotOptions: { color: qrColor.value, type: cornersType.value },
-        image: selectedLogoDataUrl || "",
-        imageOptions: { 
-            crossOrigin: "anonymous", 
-            hideBackgroundDots: true, 
-            imageSize: currentSize 
-        }
-    });
+    // Membuat angka acak antara 100 sampai 999
+    const randomNum = Math.floor(Math.random() * 900) + 100;
+    const randomFileName = `qrryzzi${randomNum}`;
 
-    // Beri jeda 200ms agar proses penggambaran ulang canvas selesai sebelum terunduh otomatis
-    setTimeout(() => {
-        qrCodeStyling.download({ name: "R-Generated-QR", extension: "png" });
-    }, 200);
+    // Download QR Code dengan nama file acak
+    qrCodeStyling.download({ name: randomFileName, extension: "png" });
 });
