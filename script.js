@@ -1,6 +1,8 @@
 // ==========================================
-// 1. MANIFEST FILE VIRTUAL (PWA LOGO)
+// fix new by ryzzi
 // ==========================================
+
+// 1. MANIFEST FILE VIRTUAL (PWA LOGO)
 const manifestBlob = new Blob([JSON.stringify({
     "name": "Qr ryzzi",
     "short_name": "Qr ryzzi",
@@ -24,9 +26,7 @@ link.rel = 'manifest';
 link.href = manifestURL;
 document.head.appendChild(link);
 
-// ==========================================
 // 2. SERVICE WORKER PWA IN-LINE
-// ==========================================
 if ('serviceWorker' in navigator) {
     const swCode = `
         const CACHE_NAME = 'r-qr-cache-v4';
@@ -41,9 +41,7 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.log('Gagal mendaftarkan PWA:', err));
 }
 
-// ==========================================
 // 3. PROSES TOMBOL MANUAL INSTALL PWA
-// ==========================================
 let deferredPrompt;
 const pwaInstallBtn = document.getElementById('pwaInstallBtn');
 
@@ -65,9 +63,7 @@ pwaInstallBtn.addEventListener('click', async () => {
     }
 });
 
-// ==========================================
 // 4. ANIMASI BACKGROUND (Hujan Bola Biru)
-// ==========================================
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
@@ -106,9 +102,7 @@ function animate() {
 }
 animate();
 
-// ==========================================
-// 5. LOGIKA UTAMA QR GENERATOR
-// ==========================================
+// 5. LOGIKA UTAMA QR GENERATOR (SESUAI ID ASLI)
 const termsCheckbox = document.getElementById('termsCheckbox');
 const enterBtn = document.getElementById('enterBtn');
 const infoBtn = document.getElementById('infoBtn');
@@ -218,6 +212,8 @@ function generateQR() {
     const textValue = qrText.value.trim() || "https://google.com";
     const currentSize = parseFloat(logoSizeRange.value);
 
+    if (!qrCodeStyling) return;
+
     qrCodeStyling.update({
         data: textValue,
         dotsOptions: { color: qrColor.value, type: dotsType.value },
@@ -233,7 +229,33 @@ function generateQR() {
     });
 }
 
+// Tombol Perbarui Preview
 previewBtn.addEventListener('click', generateQR);
+
+// Otomatis update preview QR saat user sedang mengetik link baru
+qrText.addEventListener('input', generateQR);
+
+// FIX TOMBOL DOWNLOAD: Memaksa data ter-update mendalam ke canvas tepat sebelum file diunduh
 downloadBtn.addEventListener('click', function() {
-    qrCodeStyling.download({ name: "R-Generated-QR", extension: "png" });
+    const textValue = qrText.value.trim() || "https://google.com";
+    const currentSize = parseFloat(logoSizeRange.value);
+
+    qrCodeStyling.update({
+        data: textValue,
+        dotsOptions: { color: qrColor.value, type: dotsType.value },
+        backgroundOptions: { color: bgColor.value },
+        cornersSquareOptions: { color: qrColor.value, type: cornersType.value },
+        cornersDotOptions: { color: qrColor.value, type: cornersType.value },
+        image: selectedLogoDataUrl || "",
+        imageOptions: { 
+            crossOrigin: "anonymous", 
+            hideBackgroundDots: true, 
+            imageSize: currentSize 
+        }
+    });
+
+    // Beri jeda 200ms agar proses penggambaran ulang canvas selesai sebelum terunduh otomatis
+    setTimeout(() => {
+        qrCodeStyling.download({ name: "R-Generated-QR", extension: "png" });
+    }, 200);
 });
